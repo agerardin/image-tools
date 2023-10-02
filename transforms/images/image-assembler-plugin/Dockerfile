@@ -19,6 +19,7 @@ COPY VERSION ${EXEC_DIR}
 COPY README.md ${EXEC_DIR}
 COPY CHANGELOG.md ${EXEC_DIR}
 COPY src ${EXEC_DIR}/src
+COPY preadator_package /usr/local/lib/python3.9/dist-packages/
 
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
