@@ -29,6 +29,11 @@ def main(  # noqa: PLR0913 D417
         "--inpDir",
         help="Input image collections",
     ),
+    sub_path: Optional[pathlib.Path] = typer.Option(
+        None,
+        "--subPath",
+        help="path relative to inpDir to get data from",
+    ),
     file_pattern: str = typer.Option(
         ".+",
         "--filePattern",
@@ -76,10 +81,14 @@ def main(  # noqa: PLR0913 D417
         output_dict: Dictionary of in to out file names, for testing
     """
     logger.info(f"inpDir = {inp_dir}")
+    logger.info(f"subPath = {sub_path}")
     logger.info(f"filePattern = {file_pattern}")
     logger.info(f"outDir = {out_dir}")
     logger.info(f"outFilePattern = {out_file_pattern}")
     logger.info(f"mapDirectory = {map_directory}")
+
+    if(sub_path):
+        inp_dir = (inp_dir / sub_path)
 
     inp_dir = inp_dir.resolve()
     out_dir = out_dir.resolve()
