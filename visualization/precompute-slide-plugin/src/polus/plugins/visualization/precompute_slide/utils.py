@@ -7,9 +7,13 @@ from preadator import ProcessManager
 from bfio.OmeXml import OMEXML
 import logging
 from enum import Enum
+from os import environ
 
 logging.getLogger("bfio").setLevel(logging.CRITICAL)
 
+POLUS_LOG = getattr(logging, environ.get("POLUS_LOG", "INFO"))
+logger = logging.getLogger("polus.plugins.visualization.precompute_slide.pyramid_writer")
+logger.setLevel(POLUS_LOG)
 class PyramidType(str, Enum):
     deepzoom = "DeepZoom",
     neuroglancer = "Neuroglancer",
@@ -207,12 +211,8 @@ class PyramidWriter():
         pass
     
     def write_slide(self):
-        
-        with ProcessManager.process(f'{self.base_path} - {self.output_depth}'):
-            
-            ProcessManager.submit_thread(self._write_slide)
-            
-            ProcessManager.join_threads()
+        with ProcessManager(name="write_slide") as pm:
+            pm.submit_thread(self._write_slide)
     
     def scale_info(self,S):
         
@@ -315,14 +315,16 @@ def _get_higher_res(S: int,
         Y[1] = scale_info['size'][1]
     
     if str(S)==slide_writer.scale_info(-1)['key']:
-        with ProcessManager.thread():
-        
-            with bfio.BioReader(slide_writer.image_path,max_workers=1) as br:
-            
-                image = br[Y[0]:Y[1],X[0]:X[1],Z[0]:Z[1],...].squeeze()
 
-            # Write the chunk
-            slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
+        logger.info("nested process manager...")
+        with ProcessManager("_get_higher_res") as pm:
+            with pm.thread() :
+                with bfio.BioReader(slide_writer.image_path,max_workers=1) as br:
+                
+                    image = br[Y[0]:Y[1],X[0]:X[1],Z[0]:Z[1],...].squeeze()
+
+                # Write the chunk
+                slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
         
         return image
 
@@ -339,11 +341,12 @@ def _get_higher_res(S: int,
         def load_and_scale(*args,**kwargs):
             sub_image = _get_higher_res(**kwargs)
 
-            with ProcessManager.thread():
-                image = args[0]
-                x_ind = args[1]
-                y_ind = args[2]
-                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = kwargs['slide_writer'].scale(sub_image)
+            with ProcessManager(name="_get_higher_res") as pm:
+                with pm.thread():
+                    image = args[0]
+                    x_ind = args[1]
+                    y_ind = args[2]
+                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = kwargs['slide_writer'].scale(sub_image)
         
         with ThreadPoolExecutor(1) as executor:
             for y in range(0,len(subgrid_dims[1])-1):
@@ -530,7 +533,6 @@ class ZarrWriter(PyramidWriter):
         return ZarrChunkEncoder(self.info)
     
     def _write_slide(self):
-    
         _get_higher_res(0,self,Z=(self.image_depth,self.image_depth+1))
             
     def write_info(self):
@@ -562,10 +564,14 @@ class ZarrWriter(PyramidWriter):
             for c in range(self.max_output_depth):
                 metadata.image().Pixels.Channel(c).Name = f'Channel {c}'
             
-            with open(self.base_path.joinpath("METADATA.ome.xml"),'x') as fw:
-                
-                fw.write(str(metadata).replace("<ome:","<").replace("</ome:","</"))
-
+            try: 
+                file = open(self.base_path.joinpath("METADATA.ome.xml"),'x')
+            except FileExistsError:
+                file = open(self.base_path.joinpath("METADATA.ome.xml"),'w')
+                logger.warning(f"file already exists : {file.name}. Overwriting.")
+            finally:
+                file.write(str(metadata).replace("<ome:","<").replace("</ome:","</"))
+                file.close()
 class DeepZoomWriter(PyramidWriter):
     """ Method to write a DeepZoom pyramid
     
