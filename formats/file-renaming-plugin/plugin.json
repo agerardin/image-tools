@@ -28,6 +28,12 @@
       "required": true
     },
     {
+      "name": "subPath",
+      "type": "string",
+      "description": "Optional subpath relative to inpDir. Allow selection of a specific subdirectory",
+      "required": false
+    },
+    {
       "name": "outFilePattern",
       "type": "string",
       "description": "Desired filename pattern used to rename and separate data",
