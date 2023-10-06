@@ -69,8 +69,13 @@
     },
     {
       "key": "inputs.inpDir",
-      "title": "Input collection",
+      "title": "Input directory",
       "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.subPath",
+      "title": "Subpath",
+      "description": "Relative path from input directory to select a subdirectory"
     },
     {
       "key": "inputs.outFilePattern",

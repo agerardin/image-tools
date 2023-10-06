@@ -63,7 +63,8 @@ This plugin takes three input argument and one output argument:
 
 | Name               | Description                       | I/O      | Type       |
 |--------------------|-----------------------------------|----------|------------|
-| `--inpDir`         | Input image collection            | Input    | collection |
+| `--inpDir`         | Input directory                   | Input    | collection |
+| `--subPath`        | Relative Path in input directory  | Input    | string     |
 | `--filePattern`    | Input filename pattern            | Input    | string     |
 | `--outDir`         | Output collection                 | Output   | collection |
 | `--outFilePattern` | Output filename pattern           | Input    | string     |
