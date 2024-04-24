@@ -43,7 +43,7 @@ def main(
     # This is the version of ImageJ pre-downloaded into the docker container
     logger.info("Starting ImageJ...")
     ij = imagej.init(
-        "sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4", headless=True
+        "sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4", mode='headless'
     )
     # ij_converter.ij = ij
     logger.info("Loaded ImageJ version: {}".format(ij.getVersion()))
@@ -141,25 +141,30 @@ def main(
             if in1_path != None:
                 in1_br.close()
 
+            logger.info(f"output {out}")
+
             # Saving output file to out
             logger.info("Saving...")
-            out_array = ij_converter.from_java(ij, out, out_types[_opName])
+            # out_array = ij_converter.from_java(ij, out, out_types[_opName])
+            ut_array = ij_converter.from_java(ij, out)
+
+            logger.info("Writing to disk...")       
             bw = BioWriter(_out.joinpath(fname), metadata=metadata)
             bw.Z = 1
             bw.dtype = out_array.dtype
             bw[:] = out_array.astype(bw.dtype)
             bw.close()
 
-    except:
+    except Exception as e:
         logger.error("There was an error, shutting down jvm before raising...")
-        raise
+        raise e
 
-    finally:
-        # Exit the program
-        logger.info("Shutting down jvm...")
-        del ij
-        jpype.shutdownJVM()
-        logger.info("Complete!")
+    # finally:
+    #     # Exit the program
+    #     logger.info("Shutting down jvm...")
+    #     del ij
+    #     jpype.shutdownJVM()
+    #     logger.info("Complete!")
 
 
 if __name__ == "__main__":
