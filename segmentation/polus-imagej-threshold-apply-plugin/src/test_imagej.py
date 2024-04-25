@@ -94,7 +94,7 @@ img = io.imread('https://imagej.net/images/clown.jpg')
 
 img_dataset = ij.py.to_java(img)
 
-result = np.zeros(img.shape) # HINT: Uses float dtype, for more accurate noising.
+result = np.zeros(img.shape)
 
 imgIterable = ij.op().transform().flatIterableView(img_dataset)
 resIterable = ij.op().transform().flatIterableView(ij.py.to_java(result))
